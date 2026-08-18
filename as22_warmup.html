@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Warmup — AS-22</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --bg-elev: #171b23;
+    --bg-elev-2: #1f2531;
+    --border: #2a3140;
+    --border-strong: #3a4356;
+    --text: #e6ebf2;
+    --text-dim: #98a2b3;
+    --text-mute: #6b7280;
+    --accent: #7cc4ff;
+    --accent-2: #a78bfa;
+    --create: #52d6a4;
+    --transform: #ffb454;
+    --shadow: 0 4px 24px rgba(0,0,0,0.35);
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+
+  header.top {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+  }
+  header.top .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  header.top h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  header.top p {
+    margin: 4px 0 0;
+    color: var(--text-dim);
+    font-size: 14.5px;
+  }
+
+  .prompt-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--create);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+  .prompt-card .prompt-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--create);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .prompt-card .prompt-body {
+    font-size: 22px;
+    line-height: 1.45;
+    color: var(--text);
+    font-weight: 500;
+    margin: 0;
+  }
+  .prompt-card .prompt-body em {
+    color: var(--create);
+    font-style: italic;
+  }
+  .prompt-card .prompt-caption {
+    margin-top: 12px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .compose {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .compose h2 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 650;
+    color: var(--text);
+  }
+  .compose .hint {
+    margin: 0 0 14px;
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+  textarea {
+    width: 100%;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.55;
+    resize: vertical;
+    min-height: 140px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,196,255,0.15);
+  }
+  textarea::placeholder { color: var(--text-mute); }
+
+  input[type="text"] {
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border-strong);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    width: 200px;
+    transition: border-color 0.15s ease;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .compose-meta {
+    display: flex;
+    gap: 14px;
+    margin-top: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    color: var(--text-dim);
+  }
+  .char-count {
+    font-size: 12.5px;
+    color: var(--text-mute);
+  }
+  .char-count.ok { color: var(--create); }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-elev-2);
+    color: var(--text);
+    transition: all 0.12s ease;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button.primary {
+    background: var(--accent);
+    color: #0b1220;
+    border-color: var(--accent);
+  }
+  button.primary:hover:not(:disabled) { background: #a5d6ff; border-color: #a5d6ff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status {
+    color: var(--text-mute);
+    font-size: 12.5px;
+  }
+  .status.saved { color: var(--create); }
+
+  /* Peer reveal */
+  .reveal-section {
+    margin-top: 32px;
+  }
+  .reveal-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .reveal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .reveal-header .reveal-count {
+    color: var(--text-dim);
+    font-size: 13.5px;
+  }
+  .locked-notice {
+    background: var(--bg-elev);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14.5px;
+  }
+  .locked-notice strong { color: var(--text); }
+
+  .responses-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .response-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .response-card.mine {
+    border-color: var(--accent);
+    background: rgba(124,196,255,0.06);
+  }
+  .response-card .who {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .response-card .mine-tag {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  .response-card .what {
+    font-size: 15px;
+    color: var(--text);
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  footer.foot {
+    margin-top: 40px;
+    color: var(--text-mute);
+    font-size: 12.5px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">AS-22 · Page 1 · Warmup</div>
+  <h1>Before we start.</h1>
+  <p>One prompt. One paragraph. Then the wall opens and you'll see what everyone else wrote.</p>
+</header>
+
+<section class="prompt-card">
+  <div class="prompt-eyebrow">The prompt</div>
+  <p class="prompt-body">What's the coolest thing a student ever <em>made</em> in your class — VR or not?</p>
+  <p class="prompt-caption">Not the coolest lesson you taught. The coolest thing a student <em>produced</em>. Big or small. This year or ten years ago.</p>
+</section>
+
+<section class="compose">
+  <h2>Your response</h2>
+  <p class="hint">A few sentences is plenty. What was it? What made it cool? Once you submit, you'll see everyone else's — and you can't unsubmit, so make it worth sharing.</p>
+
+  <textarea id="f-response" placeholder="e.g., A 4th grader who wrote and illustrated a picture book for their little brother about how volcanoes work, then read it to him on video…"></textarea>
+
+  <div class="compose-meta">
+    <label for="f-name" style="display:flex; align-items:center; gap:8px;">
+      <span>Name (or initials):</span>
+      <input type="text" id="f-name" placeholder="e.g., PB" maxlength="40" />
+    </label>
+    <span class="char-count" id="char-count">0 / 60 minimum</span>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="btn-submit" disabled>Submit &amp; see the wall</button>
+    <span class="status" id="status">Draft autosaves</span>
+  </div>
+</section>
+
+<section class="reveal-section" id="reveal-section">
+  <div class="reveal-header">
+    <h2>The wall</h2>
+    <span class="reveal-count" id="reveal-count"></span>
+  </div>
+  <div class="locked-notice" id="locked-notice">
+    <strong>Locked.</strong> Submit your response above and the wall opens.<br/>
+    <span style="font-size:13px;">Peer thinking is the point — but no free-riding.</span>
+  </div>
+  <div class="responses-grid" id="responses-grid" style="display:none;"></div>
+</section>
+
+<footer class="foot">
+  Peer wall stored in this browser for now. When Firebase is wired up, this becomes the shared cohort view.
+</footer>
+
+</div>
+
+<script>
+(function() {
+  // Config — matches the shared-template pageId contract
+  const CONFIG = {
+    pageId:     'as22-warmup',
+    minChars:   60,
+    showPeers:  true
+  };
+  const STORAGE_KEY_MINE   = 'warmup_' + CONFIG.pageId + '_mine_v1';
+  const STORAGE_KEY_WALL   = 'warmup_' + CONFIG.pageId + '_wall_v1';
+
+  const respEl    = document.getElementById('f-response');
+  const nameEl    = document.getElementById('f-name');
+  const submitBtn = document.getElementById('btn-submit');
+  const charEl    = document.getElementById('char-count');
+  const statusEl  = document.getElementById('status');
+  const revealCountEl = document.getElementById('reveal-count');
+  const lockedEl  = document.getElementById('locked-notice');
+  const gridEl    = document.getElementById('responses-grid');
+
+  let mine = null; // { id, name, text, ts }
+
+  // ---------- persistence ----------
+  function loadMine() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_MINE);
+      if (raw) mine = JSON.parse(raw);
+    } catch(e) {}
+  }
+  function saveMine() {
+    try { localStorage.setItem(STORAGE_KEY_MINE, JSON.stringify(mine)); } catch(e) {}
+  }
+  function loadWall() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_WALL);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return [];
+  }
+  function saveWall(list) {
+    try { localStorage.setItem(STORAGE_KEY_WALL, JSON.stringify(list)); } catch(e) {}
+  }
+
+  // ---------- draft autosave ----------
+  let draftTimer = null;
+  function saveDraft() {
+    if (draftTimer) clearTimeout(draftTimer);
+    draftTimer = setTimeout(function() {
+      try {
+        localStorage.setItem(STORAGE_KEY_MINE + '_draft', JSON.stringify({
+          text: respEl.value, name: nameEl.value
+        }));
+        statusEl.textContent = 'Draft saved';
+        statusEl.classList.add('saved');
+        setTimeout(function(){ statusEl.classList.remove('saved'); }, 1200);
+      } catch(e){}
+    }, 400);
+  }
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_MINE + '_draft');
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.text) respEl.value = d.text;
+      if (d.name) nameEl.value = d.name;
+    } catch(e){}
+  }
+
+  // ---------- char count / enable submit ----------
+  function updateCount() {
+    const len = respEl.value.trim().length;
+    charEl.textContent = len + ' / ' + CONFIG.minChars + ' minimum';
+    if (len >= CONFIG.minChars) {
+      charEl.classList.add('ok');
+      submitBtn.disabled = false;
+    } else {
+      charEl.classList.remove('ok');
+      submitBtn.disabled = true;
+    }
+  }
+  respEl.addEventListener('input', function() { updateCount(); saveDraft(); });
+  nameEl.addEventListener('input', saveDraft);
+
+  // ---------- submit ----------
+  submitBtn.addEventListener('click', function() {
+    const text = respEl.value.trim();
+    const name = nameEl.value.trim() || 'Anonymous';
+    if (text.length < CONFIG.minChars) return;
+
+    mine = {
+      id: 'r_' + Math.random().toString(36).slice(2, 10),
+      name: name,
+      text: text,
+      ts: new Date().toISOString()
+    };
+    saveMine();
+
+    // Add mine to the wall
+    const wall = loadWall();
+    wall.push(mine);
+    saveWall(wall);
+
+    // Lock the composer, reveal the wall
+    respEl.disabled = true;
+    nameEl.disabled = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '✓ Submitted';
+    statusEl.textContent = 'Submitted — the wall is open below.';
+    statusEl.classList.add('saved');
+    // Clear draft
+    try { localStorage.removeItem(STORAGE_KEY_MINE + '_draft'); } catch(e){}
+    renderWall();
+    document.getElementById('reveal-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // ---------- render wall ----------
+  function renderWall() {
+    const wall = loadWall();
+    if (!mine) {
+      lockedEl.style.display = '';
+      gridEl.style.display = 'none';
+      revealCountEl.textContent = '';
+      return;
+    }
+    lockedEl.style.display = 'none';
+    gridEl.style.display = '';
+    revealCountEl.textContent = wall.length + (wall.length === 1 ? ' response' : ' responses');
+
+    // Sort: mine first, then reverse chronological
+    const others = wall.filter(function(r){ return r.id !== mine.id; })
+                       .sort(function(a,b){ return (b.ts||'').localeCompare(a.ts||''); });
+    const ordered = [mine].concat(others);
+
+    gridEl.innerHTML = ordered.map(function(r) {
+      const isMine = r.id === mine.id;
+      return (
+        '<div class="response-card' + (isMine ? ' mine' : '') + '">' +
+          '<div class="who">' +
+            '<span>' + escapeHtml(r.name || 'Anonymous') + '</span>' +
+            (isMine ? '<span class="mine-tag">YOURS</span>' : '') +
+          '</div>' +
+          '<div class="what">' + escapeHtml(r.text) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  // ---------- boot ----------
+  loadMine();
+  if (mine) {
+    // Restore locked, submitted state
+    respEl.value = mine.text;
+    nameEl.value = mine.name;
+    respEl.disabled = true;
+    nameEl.disabled = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '✓ Submitted';
+    statusEl.textContent = 'You\'ve submitted. The wall is below.';
+    statusEl.classList.add('saved');
+  } else {
+    loadDraft();
+  }
+  updateCount();
+  renderWall();
+})();
+</script>
+</body>
+</html>
