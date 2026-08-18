@@ -330,14 +330,29 @@
 </section>
 
 <footer class="foot">
-  Peer wall stored in this browser for now. When Firebase is wired up, this becomes the shared cohort view.
+  Shared cohort wall · responses visible to everyone in your PD group.
 </footer>
 
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+// ---------- Firebase config ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyA07zz3isOGX8dYJM4T4MiF3OVi2D1YePA",
+  authDomain: "optima-pd-cohorts.firebaseapp.com",
+  projectId: "optima-pd-cohorts",
+  storageBucket: "optima-pd-cohorts.firebasestorage.app",
+  messagingSenderId: "637834043340",
+  appId: "1:637834043340:web:f9aad5008d9385b0b9c769"
+};
+
 (function() {
-  // Config — matches the shared-template pageId contract
+  // ---------- Page config ----------
   const CONFIG = {
     pageId:     'as22-warmup',
     minChars:   60,
@@ -345,6 +360,20 @@
   };
   const STORAGE_KEY_MINE   = 'warmup_' + CONFIG.pageId + '_mine_v1';
   const STORAGE_KEY_WALL   = 'warmup_' + CONFIG.pageId + '_wall_v1';
+
+  // ---------- Firebase bootstrap (with graceful fallback) ----------
+  let db = null;
+  let firebaseReady = false;
+  try {
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    firebaseReady = true;
+  } catch (e) {
+    console.warn('[warmup] Firebase init failed; using localStorage-only fallback.', e);
+  }
+  const responsesRef = firebaseReady
+    ? collection(db, 'walls', CONFIG.pageId, 'responses')
+    : null;
 
   const respEl    = document.getElementById('f-response');
   const nameEl    = document.getElementById('f-name');
@@ -418,33 +447,56 @@
   respEl.addEventListener('input', function() { updateCount(); saveDraft(); });
   nameEl.addEventListener('input', saveDraft);
 
+  // Wall state (populated by Firestore listener, or by localStorage fallback)
+  let liveWall = [];
+
   // ---------- submit ----------
-  submitBtn.addEventListener('click', function() {
+  submitBtn.addEventListener('click', async function() {
     const text = respEl.value.trim();
     const name = nameEl.value.trim() || 'Anonymous';
     if (text.length < CONFIG.minChars) return;
 
-    mine = {
-      id: 'r_' + Math.random().toString(36).slice(2, 10),
-      name: name,
-      text: text,
-      ts: new Date().toISOString()
-    };
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    let submittedId = null;
+    let usedFallback = false;
+
+    if (firebaseReady) {
+      try {
+        const docRef = await addDoc(responsesRef, {
+          name: name,
+          text: text,
+          createdAt: serverTimestamp()
+        });
+        submittedId = docRef.id;
+      } catch (e) {
+        console.warn('[warmup] Firestore write failed, falling back to localStorage.', e);
+        usedFallback = true;
+      }
+    } else {
+      usedFallback = true;
+    }
+
+    if (usedFallback) {
+      submittedId = 'local_' + Math.random().toString(36).slice(2, 10);
+      const wall = loadWall();
+      wall.push({ id: submittedId, name: name, text: text, ts: new Date().toISOString() });
+      saveWall(wall);
+    }
+
+    mine = { id: submittedId, name: name, text: text, ts: new Date().toISOString() };
     saveMine();
 
-    // Add mine to the wall
-    const wall = loadWall();
-    wall.push(mine);
-    saveWall(wall);
-
-    // Lock the composer, reveal the wall
+    // Lock composer
     respEl.disabled = true;
     nameEl.disabled = true;
-    submitBtn.disabled = true;
     submitBtn.textContent = '✓ Submitted';
-    statusEl.textContent = 'Submitted — the wall is open below.';
+    statusEl.textContent = usedFallback
+      ? 'Saved locally (offline). Reconnect to sync with the wall.'
+      : 'Submitted — the wall is open below.';
     statusEl.classList.add('saved');
-    // Clear draft
+
     try { localStorage.removeItem(STORAGE_KEY_MINE + '_draft'); } catch(e){}
     renderWall();
     document.getElementById('reveal-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -452,7 +504,14 @@
 
   // ---------- render wall ----------
   function renderWall() {
-    const wall = loadWall();
+    // Prefer the live Firestore wall; fall back to localStorage if empty AND we're in offline mode
+    let wall = liveWall.length ? liveWall.slice() : loadWall();
+
+    // Make sure my own doc appears immediately after submit, even before the Firestore listener echoes it back
+    if (mine && !wall.some(function(r){ return r.id === mine.id; })) {
+      wall = wall.concat([mine]);
+    }
+
     if (!mine) {
       lockedEl.style.display = '';
       gridEl.style.display = 'none';
@@ -489,6 +548,23 @@
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
 
+  // ---------- Firestore listener (real-time wall) ----------
+  function startWallListener() {
+    if (!firebaseReady) return;
+    const q = query(responsesRef, orderBy('createdAt', 'desc'));
+    onSnapshot(q, function(snap) {
+      liveWall = snap.docs.map(function(d) {
+        const data = d.data() || {};
+        // createdAt may be null momentarily until the server timestamp lands
+        const ts = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : '';
+        return { id: d.id, name: data.name || 'Anonymous', text: data.text || '', ts: ts };
+      });
+      renderWall();
+    }, function(err) {
+      console.warn('[warmup] Firestore listener error:', err);
+    });
+  }
+
   // ---------- boot ----------
   loadMine();
   if (mine) {
@@ -506,6 +582,7 @@
   }
   updateCount();
   renderWall();
+  startWallListener();
 })();
 </script>
 </body>
